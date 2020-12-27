@@ -1,0 +1,3 @@
+#define lampbackup_VERSION_MAJOR @lampbackup_VERSION_MAJOR@
+#define lampbackup_VERSION_MINOR @lampbackup_VERSION_MINOR@
+#define lampbackup_VERSION_PATCH @lampbackup_VERSION_PATCH@
