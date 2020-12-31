@@ -15,12 +15,14 @@
 #include <chrono>
 #include <sstream>
 #include <algorithm>
+#include <filesystem>
 #include <boost/program_options.hpp>
 #include "config.h"
 
 using namespace std;
 using namespace std::chrono;
 namespace po = boost::program_options;
+namespace fs = std::filesystem;
 
 string getDateTime()
 {
@@ -60,14 +62,14 @@ int main(int argc, char* argv[])
   string dbUser("");
   string dbPass("");
   string websiteName("");
-  string htmlDir("");
-  string sslDir("");
+  fs::path htmlDir;
+  fs::path sslDir;
 
   // Differentiating between Windows and Linux might be useful later
 #ifdef _WIN32
-  string tempDir("C:\\Windows\\Temp");
+  fs::path tempDir = fs::canonical("C:\\Windows\\Temp");
 #else
-  string tempDir("/tmp");
+  fs::path tempDir = fs::canonical("/tmp");
 #endif
 
   // Supported options
@@ -81,7 +83,7 @@ int main(int argc, char* argv[])
     ("websiteName", po::value<string>(), "Name of website (alphanumeric only, used in backup name)")
     ("htmlDir", po::value<string>(), "Root directory for PHP/HTML files")
     ("sslDir", po::value<string>(), "Root directory for SSL files")
-    ("tempDir", po::value<string>()->default_value(tempDir), "Temporary directory")
+    ("tempDir", po::value<string>()->default_value(tempDir.string()), "Temporary directory")
     ;
 
   //------------------------------------------------------------
@@ -107,7 +109,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    cout << "dbName was not set. Exiting.";
+    cout << "dbName was not set. Exiting." << endl;
     return 1;
   }
 
@@ -117,7 +119,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    cout << "dbUser was not set. Exiting.";
+    cout << "dbUser was not set. Exiting." << endl;
     return 1;
   }
 
@@ -127,7 +129,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    cout << "dbPass was not set. Exiting.";
+    cout << "dbPass was not set. Exiting." << endl;
     return 1;
   }
 
@@ -141,32 +143,50 @@ int main(int argc, char* argv[])
   }
   else
   {
-    cout << "websiteName was not set. Exiting.";
+    cout << "websiteName was not set. Exiting." << endl;
     return 1;
   }
 
   if (vm.count("htmlDir"))
   {
-    htmlDir = vm["htmlDir"].as<string>();
+    try 
+    {
+      htmlDir = fs::canonical(vm["htmlDir"].as<string>());
+    }
+    catch(const exception & e)
+    {
+      cerr << "ERROR: Could find HTML directory " << vm["htmlDir"].as<string>() 
+           << " (" << e.what() << ")" << endl;
+      return 1;
+    }
   }
   else
   {
-    cout << "htmlDir was not set. Exiting.";
+    cout << "htmlDir was not set. Exiting." << endl;
     return 1;
   }
 
   if (vm.count("sslDir"))
   {
-    sslDir = vm["sslDir"].as<string>();
+    try
+    {
+      sslDir = fs::canonical(vm["sslDir"].as<string>());
+    }
+    catch(const exception & e)
+    {
+      cerr << "ERROR: Could find SSL directory " << vm["sslDir"].as<string>() 
+           << " (" << e.what() << ")" << endl;
+      return 1;
+    }
   }
   else
   {
-    cout << "sslDir was not set. Exiting.";
+    cout << "sslDir was not set. Exiting." << endl;
     return 1;
   }
 
   // Archive file name
-  string archiveName(websiteName + "_" + getDateTime() + ".tar");
+  string archiveName(websiteName + "_" + getDateTime());
 
   //------------------------------------------------------------
   // Print the program configuration
@@ -180,19 +200,52 @@ int main(int argc, char* argv[])
        << "\n            Website name: " << websiteName
        << "\n     HTML root directory: " << htmlDir
        << "\n           SSL directory: " << sslDir
-       << "\n       Archive file name: " << archiveName
+       << "\n            Archive name: " << archiveName
        << "\n     Temporary directory: " << tempDir
-    << "\n--------------------------------------------------------------------------------"
+       << "\n--------------------------------------------------------------------------------"
        << endl;
 
   // TODO:
   //   * Attempt to stop httpd?
-  //   * Save the current working directory as originalWorkingDir 
-  //   * Create a root working backup directory structure at tempDir/archiveName
-  //     (e.g. mkdir -p tempdir/archiveName/html tempdir/archiveName/ssl)
+
+  // Save the current directory as originalDir
+  fs::path originalDir = fs::current_path();
+  cout << "Original directory: " << originalDir << endl;
+
+  // Create a staging directory structure at tempDir/archiveName
+  cout << "Changing directory to " << tempDir << endl;
+  fs::current_path(tempDir);
+  cout << "Current directory: " << fs::current_path().string() << endl;
+  cout << "Creating staging at " 
+       << fs::current_path().string() << "/" << archiveName << endl;
+  fs::remove(archiveName); // This is probably never needed
+  fs::create_directory(archiveName);
+  fs::path stagingDir = fs::canonical(archiveName);
+  cout << "Changing directory to " << stagingDir.string() << endl;
+  fs::current_path(stagingDir);
+  cout << "Current directory: " << fs::current_path().string() << endl;
+  cout << "Creating html and ssl subdirectories" << endl;
+  fs::create_directory("html");
+  fs::create_directory("ssl");
+
   //   * Copy files from htmlDir to tempdir/archiveName/html
   //     (e.g. cp -fr htmlDir/* tempdir/archiveName/html/)
-  //     Copy hidden files too (e.g. .htaccess)
+  //string fromPath(originalDir.string() + "/" + htmlDir + "/");
+  fs::path toPath = fs::canonical(stagingDir.string() + "/html/");
+  try
+  {
+    cerr << "Copying files from " << htmlDir.string() << " to " << toPath.string() << endl;
+    fs::copy(htmlDir, toPath, fs::copy_options::recursive);
+  }
+  catch(const exception & e)
+  {
+    cerr << "ERROR: Could not copy files from " << htmlDir.string() << " to " << toPath.string()
+         << " (" << e.what() << ")" << endl;
+    return 1;
+  }
+
+  // TODO:
+  //    * Check for hidden files to copy (e.g. .htaccess)
   //   * Copy files from sslDir to tempdir/archiveName/ssl
   //     (e.g. cp -fr sslDir/* tempdir/archiveName/ssl/)
   //   * Create mysql dump file of database in tempdir/archiveName/
@@ -202,4 +255,19 @@ int main(int argc, char* argv[])
   //   * Copy archiveName.tar.gz to originalWorkingDir
   //   * (e.g. cd tempDir && rm -fr archiveName)
   //   * Consider option to specify output directory
- }
+
+  cout << "Removing staging directory at " << stagingDir.string() << endl;
+  try
+  {
+    fs::remove_all(stagingDir);
+  }
+  catch(const exception & e)
+  {
+    cerr << "ERROR: Could remove staging directory " << stagingDir.string() 
+        << " (" << e.what() << ")" << endl;
+    return 1;
+  }
+   
+  // End of main() function
+  return 0;
+}
