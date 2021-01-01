@@ -49,7 +49,7 @@ bool LAMPbackup::parseUserConfig(int argc, char *argv[])
   {
     cerr << "ERROR: " << e.what() << endl;
     cout << *m_optionsDescription << "\n";
-    throw;
+    return false;
   }
   po::notify(vm);
   if (vm.count("help") || argc < 2)
