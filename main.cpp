@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <filesystem>
 #include "config.h"
-#include "LAMPprep.h"
+#include "LAMPbackup.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -35,49 +35,49 @@ int main(int argc, char *argv[])
 {
   printVersion();
 
-  LAMPprep lampPrep;
+  LAMPbackup lampBackup;
 
-  if(!lampPrep.parseUserConfig(argc, argv))
+  if(!lampBackup.parseUserConfig(argc, argv))
   {
     cerr << "Exiting (could not parse user config)" << endl;
     return 1;
   }
 
   cout << "Executing step 1: Preparing staging path" << endl;
-  if(!lampPrep.prepStagingPath())
+  if(!lampBackup.prepStagingPath())
   {
     cerr << "Exiting (could not prepare staging path)" << endl;
     return 1;
   }
   cout << "Executing step 2: Copying HTML files" << endl;
-  if(!lampPrep.copyHTMLfiles())
+  if(!lampBackup.copyHTMLfiles())
   {
     cerr << "Exiting (could not copy HTML files)" << endl;
     return 1;
   }
   cout << "Executing step 3: Copying SSL files" << endl;
-  if(!lampPrep.copySSLfiles())
+  if(!lampBackup.copySSLfiles())
   {
     cerr << "Exiting (could not copy SSL files)" << endl;
     return 1;
   }
   cout << "Executing step 4: Copying database to dump file" << endl;
-  if(!lampPrep.copyDatabase())
+  if(!lampBackup.copyDatabase())
   {
     cerr << "Exiting (could not dump SQL)" << endl;
     return 1;
   }
   cout << "Executing step 5: Archiving staging path" << endl;
-  if(!lampPrep.archiveStagingPath())
+  if(!lampBackup.archiveStagingPath())
   {
     cerr << "Exiting (could not archive staging path)" << endl;
     return 1;
   }
 
-  if(!lampPrep.debug())
+  if(!lampBackup.debug())
   {
     cout << "Executing step 6: Removing staging path" << endl;
-    if(!lampPrep.removeStagingPath())
+    if(!lampBackup.removeStagingPath())
     {
       cerr << "Exiting (could not remove staging path)" << endl;
       return 1;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   else
   {
      cout << "Skipping step 6: (staging path will not be removed)\n"
-          << "Staging path: " << lampPrep.stagingPath() << endl;
+          << "Staging path: " << lampBackup.stagingPath() << endl;
   }
    
   // TODO: 
