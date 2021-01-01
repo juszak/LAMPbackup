@@ -16,8 +16,6 @@ LAMPbackup::LAMPbackup()
   m_dbUser = "";
   m_dbPass = "";
   m_websiteName = "";
-  //fs::path m_htmlPath;
-  //fs::path m_sslPath;
   m_tempPath = fs::path(tmpDir);
   m_debug = false;
   m_optionsDescription = make_shared<po::options_description>("Usage"); // not certain this is right
@@ -356,4 +354,3 @@ bool LAMPbackup::removeStagingPath()
   }
   return true;
 }
-
