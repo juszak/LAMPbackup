@@ -8,7 +8,7 @@ project(lampbackup VERSION 1.0.0)
 configure_file(config.h.in config.h)
 
 # Executable
-add_executable(lampbackup lampbackup.cpp)
+add_executable(lampbackup main.cpp LAMPbackup.cpp)
 target_compile_features(lampbackup PRIVATE cxx_std_17)
 
 # Include directories
