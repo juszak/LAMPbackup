@@ -16,12 +16,10 @@
 #include <iomanip>
 #include <sstream>
 #include <algorithm>
-#include <filesystem>
 #include "config.h"
 #include "LAMPbackup.h"
 
 using namespace std;
-namespace fs = std::filesystem;
 
 void printVersion()
 {
