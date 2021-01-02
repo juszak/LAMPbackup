@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <boost/program_options.hpp>
+
 using namespace std;
 using namespace std::chrono;
 namespace po = boost::program_options;
@@ -42,6 +43,7 @@ private:
   fs::path m_sslPath;
   fs::path m_stagingPath;
   fs::path m_tempPath;
+  fs::path m_origPath;
   string m_archiveName;
   bool m_debug;
   shared_ptr<po::options_description> m_optionsDescription;
