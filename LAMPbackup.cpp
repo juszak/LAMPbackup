@@ -246,7 +246,7 @@ bool LAMPbackup::prepStagingPath()
     throw logic_error("Attempt to use unconfigured LAMPbackup (LAMPbackup.prepStagingPath())");
   }
     // Save the current directory as originalDir
-  fs::path m_origPath = fs::current_path();
+  m_origPath = fs::current_path();
   if (debug())
   {
     cout << "Original directory: " << m_origPath.string() << endl;
@@ -314,11 +314,13 @@ bool LAMPbackup::copyFiles(fs::path fromPath, fs::path toPath)
 
 bool LAMPbackup::copyDatabase()
 {
-  string dumpCmd = "mysqldump --password= " + m_dbPass 
-    + " --user=" + m_dbUser 
-    + " --host=" + m_dbHost 
-    + " --add-drop-table " 
-    + m_dbName + " > " + m_stagingPath.string() + "/" + m_dbName + ".sql";
+  string dumpCmd = string("mysqldump")
+    + string(" --password=") + m_dbPass 
+    + string(" --user=")     + m_dbUser 
+    + string(" --host=")     + m_dbHost 
+    + string(" --add-drop-table ") 
+    + m_dbName + string(" > ") + m_stagingPath.string() 
+    + string("/") + m_dbName + string(".sql");
   if(system(dumpCmd.c_str()) == 0)
   {
     return true;
@@ -332,12 +334,20 @@ bool LAMPbackup::copyDatabase()
 bool LAMPbackup::archiveStagingPath()
 {
   // Archive the staging path as a ".tar.gz" file (gzip compressed tarball)
-  string tarCmd = "tar -czvf " + m_archiveName + ".tar.gz " + m_stagingPath.string() + " --directory " + m_origPath.string();
-  if(system(tarCmd.c_str()) == 0)
+  fs::current_path(m_tempPath);
+  string archiveFile(m_archiveName + ".tar.gz");
+  string tarCmd = "tar -czf " + archiveFile + " " + m_archiveName + "/";
+  
+  // Notes on tar return codes: https://www.gnu.org/software/tar/manual/html_section/tar_19.html
+  int tarExitCode = system(tarCmd.c_str());
+
+  if(tarExitCode == 0 || tarExitCode == 1)
   {
+    // Move from temp directory to original working directory
+    fs::rename(m_tempPath/archiveFile, m_origPath/archiveFile);
     return true;
   }
-  else
+  else // Probably tarExitCode == 2
   {
     return false;
   }
