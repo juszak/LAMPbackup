@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // lampbackup - backup utility for sites using LAMP stack (Linux, Apache,
 //              MySQL/MariaDB, & PHP)
-// Attempting to build for Windows as well (not just Linux), but Windows is not
-// a requirement
 
 // This is more-or-less an exercise being used as a backdrop to test out several
 // other things right now (some CI/CD related capabilties). I have an existing
@@ -88,20 +86,7 @@ int main(int argc, char *argv[])
   }
    
   // TODO: 
-  //   * Verify presence of prerequisite tools
-  //     - tar (proabably assumed on Linux systems)
-  //     - gzip (might just skip compression)
-  //     - mysqldump
-  //     Can probably meet this requirement via RPM packaging with dependencies
-  //   * Attempt to stop httpd?
-  //   * Copy files from sslPath to tempdir/archiveName/ssl
-  //     (e.g. cp -fr sslPath/* tempdir/archiveName/ssl/)
-  //   * Create mysql dump file of database in tempdir/archiveName/
-  //     (e.g. cd tempdir/archiveName && mysqldump --password=dbPass --user=dbUser --host=dbHost --add-drop-table dbName > dbName.sql)
-  //   * Archive and compress working directory
-  //     (e.g. cd tempDir && tar -czf archiveName.tar.gz archiveName/)
-  //   * Copy archiveName.tar.gz to originalWorkingDir
-  //   * (e.g. cd tempDir && rm -fr archiveName)
+  //   * Attempt to stop/restart httpd?
   //   * Consider option to specify output directory
 
   // End of main() function
