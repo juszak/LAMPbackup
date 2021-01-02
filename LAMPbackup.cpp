@@ -1,12 +1,6 @@
 #include "LAMPbackup.h"
 
-#ifdef _WIN32
-constexpr auto dirSeparator = '\\';
-constexpr auto tmpDir = "C:\\Windows\\Temp";
-#else
-constexpr auto dirSeparator = '/';
 constexpr auto tmpDir = "/tmp";
-#endif
 
 LAMPbackup::LAMPbackup()
 {
@@ -252,10 +246,10 @@ bool LAMPbackup::prepStagingPath()
     throw logic_error("Attempt to use unconfigured LAMPbackup (LAMPbackup.prepStagingPath())");
   }
     // Save the current directory as originalDir
-  fs::path originalDir = fs::current_path();
+  fs::path m_origPath = fs::current_path();
   if (debug())
   {
-    cout << "Original directory: " << originalDir << endl;
+    cout << "Original directory: " << m_origPath.string() << endl;
   }
 
   // Create a staging directory structure at tempDir/archiveName
@@ -320,14 +314,33 @@ bool LAMPbackup::copyFiles(fs::path fromPath, fs::path toPath)
 
 bool LAMPbackup::copyDatabase()
 {
-  cerr << "LAMPbackup::copyDatabase() not implemented" << endl;
-  return false;
+  string dumpCmd = "mysqldump --password= " + m_dbPass 
+    + " --user=" + m_dbUser 
+    + " --host=" + m_dbHost 
+    + " --add-drop-table " 
+    + m_dbName + " > " + m_stagingPath.string() + "/" + m_dbName + ".sql";
+  if(system(dumpCmd.c_str()) == 0)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 bool LAMPbackup::archiveStagingPath()
 {
-  cerr << "LAMPbackup::archiveStagingPath() not implemented" << endl;
-  return false;
+  // Archive the staging path as a ".tar.gz" file (gzip compressed tarball)
+  string tarCmd = "tar -czvf " + m_archiveName + ".tar.gz " + m_stagingPath.string() + " --directory " + m_origPath.string();
+  if(system(tarCmd.c_str()) == 0)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 bool LAMPbackup::removeStagingPath()
