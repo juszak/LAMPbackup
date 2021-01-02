@@ -24,12 +24,11 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # Include directories
 target_include_directories(${APP_NAME} PUBLIC
                            "${PROJECT_BINARY_DIR}"
-                           ${BOOST_INCLUDEDIR}
                            )
 target_link_libraries(
   ${APP_NAME} 
-  ${BOOST_LIBRARYDIR}/libboost_system.a
-  ${BOOST_LIBRARYDIR}/libboost_program_options.a
+  boost_system
+  boost_program_options
   stdc++fs
 )
 
